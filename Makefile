@@ -268,7 +268,17 @@ _build-with-docker: # Internal target for Docker-based cross-compilation
 docker-image: build-ui ## Build Docker image (LOCAL=1 to use Dockerfile.local)
 	@echo "$(GREEN)Building Docker image...$(NC)"
 	$(eval GIT_SHA=$(shell git rev-parse --short HEAD))
-	$(eval DOCKERFILE=$(if $(LOCAL),transports/Dockerfile.local,transports/Dockerfile))
+	$(eval DOCKERFILE=\
+		$(if $(DYNAMIC),\
+			$(if $(LOCAL),transports/Dockerfile.local.dynamic,transports/Dockerfile.dynamic),\
+			$(if $(LOCAL),transports/Dockerfile.local,transports/Dockerfile)\
+		)\
+	)
+	@if [ -n "$(DYNAMIC)" ]; then \
+		echo "$(CYAN)Building Docker image with dynamic linking using ${DOCKERFILE}...$(NC)"; \
+	else \
+		echo "$(CYAN)Building Docker image with static linking using ${DOCKERFILE}...$(NC)"; \
+	fi
 	@docker build -f $(DOCKERFILE) -t bifrost -t bifrost:$(GIT_SHA) -t bifrost:latest .
 	@echo "$(GREEN)Docker image built: bifrost, bifrost:$(GIT_SHA), bifrost:latest (using $(DOCKERFILE))$(NC)"
 
