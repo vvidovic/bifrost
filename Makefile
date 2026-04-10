@@ -46,6 +46,7 @@ help: ## Show this help message
 	@echo "  APP_DIR           App data directory inside container (default: /app/data)"
 	@echo "  LOCAL             Use local go.work for builds (e.g., make build LOCAL=1)"
 	@echo "  DEBUG             Enable delve debugger on port 2345 (e.g., make dev DEBUG=1, make test-core DEBUG=1, make test-governance DEBUG=1)"
+	@echo "  DYNAMIC           Build Bifrost binary or docker image with dynamic linking, required for custom plugins (e.g., make build DYNAMIC=1)"
 	@echo ""
 	@echo "$(YELLOW)Test Configuration:$(NC)"
 	@echo "  TEST_REPORTS_DIR  Directory for HTML test reports (default: test-reports)"
