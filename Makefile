@@ -279,7 +279,7 @@ docker-image: build-ui ## Build Docker image (LOCAL=1 to use Dockerfile.local)
 	else \
 		echo "$(CYAN)Building Docker image with static linking using ${DOCKERFILE}...$(NC)"; \
 	fi
-	@docker build -f $(DOCKERFILE) -t bifrost -t bifrost:$(GIT_SHA) -t bifrost:latest .
+	@docker build --build-arg VERSION=${VERSION} -f $(DOCKERFILE) -t bifrost -t bifrost:$(GIT_SHA) -t bifrost:latest .
 	@echo "$(GREEN)Docker image built: bifrost, bifrost:$(GIT_SHA), bifrost:latest (using $(DOCKERFILE))$(NC)"
 
 docker-run: ## Run Docker container (Usage: make docker-run [CONFIG=path/to/config.json or path/to/dir/])
