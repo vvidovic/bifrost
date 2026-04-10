@@ -34,7 +34,7 @@
   
   COPY --from=ui-builder /app/out ./bifrost-http/ui
   
-  # Build the binary with CGO enabled and static SQLite linking
+  # Build the binary with CGO enabled and dynamic linking
   ENV GOWORK=off
   ARG VERSION=unknown
   RUN go build \
