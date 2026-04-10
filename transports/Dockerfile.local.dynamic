@@ -54,7 +54,7 @@
   # Copy UI build output into transports
   COPY --from=ui-builder /app/out ./transports/bifrost-http/ui
   
-  # Build the binary with CGO enabled and static SQLite linking
+  # Build the binary with CGO enabled and dynamic linking
   ARG VERSION=unknown
   RUN cd /build/transports && \
     go build \
