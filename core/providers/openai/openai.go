@@ -1808,9 +1808,17 @@ func HandleOpenAIResponsesStreaming(
 					if response.Code != nil {
 						bifrostErr.Error.Code = response.Code
 					}
+					if response.Response != nil && response.Response.Error != nil {
+						if response.Response.Error.Message != "" && bifrostErr.Error.Message == "" {
+							bifrostErr.Error.Message = response.Response.Error.Message
+						}
+						if response.Response.Error.Code != "" && (bifrostErr.Error.Code == nil || *bifrostErr.Error.Code == "") {
+							bifrostErr.Error.Code = schemas.Ptr(response.Response.Error.Code)
+						}
+					}
 
 					ctx.SetValue(schemas.BifrostContextKeyStreamEndIndicator, true)
-					providerUtils.ProcessAndSendBifrostError(ctx, postHookRunner, providerUtils.EnrichError(ctx, bifrostErr, jsonBody, nil, sendBackRawRequest, sendBackRawResponse), responseChan, logger)
+					providerUtils.ProcessAndSendBifrostError(ctx, postHookRunner, providerUtils.EnrichError(ctx, bifrostErr, jsonBody, []byte(jsonData), sendBackRawRequest, sendBackRawResponse), responseChan, logger)
 					return
 				}
 
@@ -1832,7 +1840,7 @@ func HandleOpenAIResponsesStreaming(
 						bifrostErr.Error.Code = &response.Response.Error.Code
 					}
 					ctx.SetValue(schemas.BifrostContextKeyStreamEndIndicator, true)
-					providerUtils.ProcessAndSendBifrostError(ctx, postHookRunner, providerUtils.EnrichError(ctx, bifrostErr, jsonBody, nil, sendBackRawRequest, sendBackRawResponse), responseChan, logger)
+					providerUtils.ProcessAndSendBifrostError(ctx, postHookRunner, providerUtils.EnrichError(ctx, bifrostErr, jsonBody, []byte(jsonData), sendBackRawRequest, sendBackRawResponse), responseChan, logger)
 					return
 				}
 
@@ -3472,6 +3480,11 @@ func HandleOpenAIImageGenerationStreaming(
 // Rerank is not supported by the OpenAI provider.
 func (provider *OpenAIProvider) Rerank(ctx *schemas.BifrostContext, key schemas.Key, request *schemas.BifrostRerankRequest) (*schemas.BifrostRerankResponse, *schemas.BifrostError) {
 	return nil, providerUtils.NewUnsupportedOperationError(schemas.RerankRequest, provider.GetProviderKey())
+}
+
+// OCR is not supported by the Openai provider.
+func (provider *OpenAIProvider) OCR(ctx *schemas.BifrostContext, key schemas.Key, request *schemas.BifrostOCRRequest) (*schemas.BifrostOCRResponse, *schemas.BifrostError) {
+	return nil, providerUtils.NewUnsupportedOperationError(schemas.OCRRequest, provider.GetProviderKey())
 }
 
 // VideoGeneration performs a video generation request via the OpenAI API.

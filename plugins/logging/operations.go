@@ -79,6 +79,10 @@ func applySerializedLogUpdates(
 			updates["rerank_output"] = entry.RerankOutput
 			updates["content_summary"] = entry.ContentSummary
 		}
+		if data.OCROutput != nil {
+			updates["ocr_output"] = entry.OCROutput
+			updates["content_summary"] = entry.ContentSummary
+		}
 		if data.SpeechOutput != nil {
 			updates["speech_output"] = entry.SpeechOutput
 		}
@@ -228,6 +232,10 @@ func (p *LoggerPlugin) updateLogEntry(
 		}
 		if data.RerankOutput != nil {
 			tempEntry.RerankOutputParsed = data.RerankOutput
+			needsSerialization = true
+		}
+		if data.OCROutput != nil {
+			tempEntry.OCROutputParsed = data.OCROutput
 			needsSerialization = true
 		}
 		if data.SpeechOutput != nil {
@@ -534,12 +542,11 @@ func (p *LoggerPlugin) applyStreamingOutputToEntry(entry *logstore.Log, streamRe
 		}
 		latF := float64(streamResponse.Data.Latency)
 		entry.Latency = &latF
-		return
+	} else {
+		entry.Status = "success"
+		latF := float64(streamResponse.Data.Latency)
+		entry.Latency = &latF
 	}
-
-	entry.Status = "success"
-	latF := float64(streamResponse.Data.Latency)
-	entry.Latency = &latF
 
 	// Update model if provided
 	if streamResponse.Data.Model != "" {
@@ -696,6 +703,12 @@ func (p *LoggerPlugin) applyNonStreamingOutputToEntry(entry *logstore.Log, resul
 		}
 		if result.EmbeddingResponse != nil && len(result.EmbeddingResponse.Data) > 0 {
 			entry.EmbeddingOutputParsed = result.EmbeddingResponse.Data
+		}
+		if result.RerankResponse != nil && len(result.RerankResponse.Results) > 0 {
+			entry.RerankOutputParsed = result.RerankResponse.Results
+		}
+		if result.OCRResponse != nil {
+			entry.OCROutputParsed = result.OCRResponse
 		}
 		if result.SpeechResponse != nil {
 			entry.SpeechOutputParsed = result.SpeechResponse
@@ -1053,6 +1066,12 @@ func buildResponseForRequestType(requestType schemas.RequestType, usage *schemas
 				ExtraFields: extra,
 			},
 		}
+	case schemas.OCRRequest:
+		return &schemas.BifrostResponse{
+			OCRResponse: &schemas.BifrostOCRResponse{
+				ExtraFields: extra,
+			},
+		}
 	case schemas.ResponsesRequest, schemas.ResponsesStreamRequest:
 		// Convert BifrostLLMUsage back to ResponsesResponseUsage, preserving token
 		// detail breakdowns so CalculateCost can apply cache and search-query pricing.
@@ -1073,18 +1092,18 @@ func buildResponseForRequestType(requestType schemas.RequestType, usage *schemas
 					CachedWriteTokens: usage.PromptTokensDetails.CachedWriteTokens,
 				}
 			}
-		if usage.CompletionTokensDetails != nil {
-			respUsage.OutputTokensDetails = &schemas.ResponsesResponseOutputTokens{
-				TextTokens:               usage.CompletionTokensDetails.TextTokens,
-				AcceptedPredictionTokens: usage.CompletionTokensDetails.AcceptedPredictionTokens,
-				AudioTokens:              usage.CompletionTokensDetails.AudioTokens,
-				ImageTokens:              usage.CompletionTokensDetails.ImageTokens,
-				ReasoningTokens:          usage.CompletionTokensDetails.ReasoningTokens,
-				RejectedPredictionTokens: usage.CompletionTokensDetails.RejectedPredictionTokens,
-				CitationTokens:           usage.CompletionTokensDetails.CitationTokens,
-				NumSearchQueries:         usage.CompletionTokensDetails.NumSearchQueries,
+			if usage.CompletionTokensDetails != nil {
+				respUsage.OutputTokensDetails = &schemas.ResponsesResponseOutputTokens{
+					TextTokens:               usage.CompletionTokensDetails.TextTokens,
+					AcceptedPredictionTokens: usage.CompletionTokensDetails.AcceptedPredictionTokens,
+					AudioTokens:              usage.CompletionTokensDetails.AudioTokens,
+					ImageTokens:              usage.CompletionTokensDetails.ImageTokens,
+					ReasoningTokens:          usage.CompletionTokensDetails.ReasoningTokens,
+					RejectedPredictionTokens: usage.CompletionTokensDetails.RejectedPredictionTokens,
+					CitationTokens:           usage.CompletionTokensDetails.CitationTokens,
+					NumSearchQueries:         usage.CompletionTokensDetails.NumSearchQueries,
+				}
 			}
-		}
 		}
 		return &schemas.BifrostResponse{
 			ResponsesResponse: &schemas.BifrostResponsesResponse{
